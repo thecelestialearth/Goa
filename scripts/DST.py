@@ -77,7 +77,7 @@ def get_file_data(out_file):
     new_inv.drop(new_inv.iloc[:, 2:13], axis=1, inplace=True)
     for key,value in trp_corr['km'].items():
         new_inv.loc[new_inv['Tech_name'].str.contains(key+'-'), 'VALUE'] /= value
-    new_inv.drop(new_inv.columns[-1], axis=1, inplace=True)
+    new_inv.drop(columns=['Electr'], inplace=True)
     new_inv["Sector"] = [sector[0] for sector in new_inv['Tech_name'].str.split('-')]
     #  Electrcity Production
 
