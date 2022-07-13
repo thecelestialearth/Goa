@@ -5,7 +5,8 @@ import panel as pn
 import numpy as np
 pn.extension('plotly','vega')
 import pandas as pd
-
+from io import BytesIO
+from altair_saver import save
 ####################################################################################################
 #SEEME Fast version
 #
@@ -109,21 +110,16 @@ def get_charts(all_data):
     ######################
     base = alt.Chart(all_data["Primary"].dropna(),width=614,height=437)
     selection = alt.selection_multi(fields=['primary_names'],bind='legend')
-    grouped = base.mark_area().encode(
+    pe_fuel = base.mark_area().encode(
                     alt.X("YEAR:N",axis=alt.Axis(labelFontSize=15,labelAngle=270,titleFontSize=20)),
                     alt.Y("sum(VALUE)",title='Primary Energy in PJ',axis=alt.Axis(labelFontSize=15,labelAngle=0,titleFontSize=20)),
                     alt.Color('primary_names'),
                     opacity = alt.condition(selection, alt.value(1), alt.value(0.1)),
                     tooltip=['primary_names','YEAR','sum(VALUE)']
                 ).add_selection(selection).interactive()
-    text = base.mark_text(dx=0,dy=-40, color='black').encode(
-        x=alt.X('YEAR:N', stack='zero'),
-        y=alt.Y('sum(VALUE)'),
-        text=alt.Text('sum(VALUE)', format='.2f')
-    )
 
     # Each sector plot filtered by clicking the stacked plot
-    one_group = grouped.mark_bar().encode(
+    one_group = pe_fuel.mark_bar().encode(
         alt.Y("sum(VALUE)",title='Primary Energy in PJ',axis=alt.Axis(labelFontSize=15,labelAngle=0,titleFontSize=20)),
         alt.Color('primary_names'), 
         tooltip=['primary_names','sum(VALUE)','YEAR'],
@@ -131,7 +127,20 @@ def get_charts(all_data):
     ).transform_filter( 
         selection
     ).interactive()
-    pe_chart = grouped&one_group
+    
+    def save_plot():
+        output = BytesIO()
+        output.name = "data.png"
+        save(chart=(pe_fuel), fp=output,format='png',scale_factor=2.0, method='selenium',webdriver='chrome')
+        output.seek(0)
+        return output
+    def get_csv():    
+        df = pe_fuel.data.pivot_table(values='VALUE',index=['primary_names'],columns='YEAR').reset_index()
+        return BytesIO(df.to_csv().encode())
+    save_charts = pn.widgets.FileDownload(filename='Plot_for_Primary_Energy.png', callback=save_plot, button_type="primary")    
+    save_csv = pn.widgets.FileDownload(filename='Data_for_Primary_Energy.csv', callback=get_csv, button_type="primary") 
+    pe_chart = pn.Column(save_charts,save_csv, pe_fuel&one_group)
+
     ######################
     ## Final Energy by Fuel and Sectors
     ######################
@@ -174,9 +183,34 @@ def get_charts(all_data):
     ).transform_filter( 
         selection
     ).interactive()
+
+    def save_plot():
+        output = BytesIO()
+        output.name = "data.png"
+        save(chart=(fe_by_fuel), fp=output,format='png',scale_factor=2.0, method='selenium',webdriver='chrome')
+        output.seek(0)
+        return output
+    def get_csv():    
+        df = fe_by_fuel.data.pivot_table(values='VALUE',index=['Fuel'],columns='YEAR').reset_index()
+        return BytesIO(df.to_csv().encode())
+    save_charts = pn.widgets.FileDownload(filename='Plot_for_Final_Energy_Fuel.png', callback=save_plot, button_type="primary")    
+    save_csv = pn.widgets.FileDownload(filename='Data_for_Final_Energy_Fuel.csv', callback=get_csv, button_type="primary") 
     
-    fe_fuel_chart = fe_by_fuel&one_fuel
-    fe_sec_chart = fe_by_sec&one_sec
+    fe_fuel_chart = pn.Column(save_charts,save_csv, fe_by_fuel&one_fuel)
+
+    def save_plot():
+        output = BytesIO()
+        output.name = "data.png"
+        save(chart=(fe_by_sec), fp=output,format='png',scale_factor=2.0, method='selenium',webdriver='chrome')
+        output.seek(0)
+        return output
+    def get_csv():    
+        df = fe_by_sec.data.pivot_table(values='VALUE',index=['Sector'],columns='YEAR').reset_index()
+        return BytesIO(df.to_csv().encode())
+    save_charts = pn.widgets.FileDownload(filename='Plot_for_Final_Energy_Sec.png', callback=save_plot, button_type="primary")    
+    save_csv = pn.widgets.FileDownload(filename='Data_for_Final_Energy_Sec.csv', callback=get_csv, button_type="primary") 
+
+    fe_sec_chart = pn.Column(save_charts,save_csv,fe_by_sec&one_sec)
     ######################
     ## Emissions
     ######################
@@ -198,7 +232,20 @@ def get_charts(all_data):
     ).transform_filter( 
         selection
     ).interactive()
-    emi_chart = tot_emi_by_year&one_emi
+    
+    def save_plot():
+        output = BytesIO()
+        output.name = "data.png"
+        save(chart=(tot_emi_by_year), fp=output,format='png',scale_factor=2.0, method='selenium',webdriver='chrome')
+        output.seek(0)
+        return output
+    def get_csv():    
+        df = tot_emi_by_year.data.pivot_table(values='VALUE',index=['Sector'],columns='YEAR').reset_index()
+        return BytesIO(df.to_csv().encode())
+    save_charts = pn.widgets.FileDownload(filename='Plot_for_Emissions_Sec.png', callback=save_plot, button_type="primary")    
+    save_csv = pn.widgets.FileDownload(filename='Data_for_Emissions_Sec.csv', callback=get_csv, button_type="primary") 
+    
+    emi_chart = pn.Column(save_charts,save_csv,tot_emi_by_year&one_emi)
     ######################
     ## CAP INVESTMENT BY SECTOR
     ######################
@@ -222,8 +269,22 @@ def get_charts(all_data):
     ).transform_filter( 
         selection
     ).interactive()
-    inv_chart = tot_inv_by_year & one_inv
-
+    
+    def save_plot():
+        output = BytesIO()
+        output.name = "data.png"
+        save(chart=(tot_inv_by_year), fp=output,format='png',scale_factor=2.0, method='selenium',webdriver='chrome')
+        output.seek(0)
+        return output
+    def get_csv():    
+        df = tot_inv_by_year.data.pivot_table(values='VALUE',index=['Sector'],columns='YEAR').reset_index()
+        return BytesIO(df.to_csv().encode())
+    save_charts = pn.widgets.FileDownload(filename='Plot_for_Investment_Sec.png', callback=save_plot, button_type="primary")    
+    save_csv = pn.widgets.FileDownload(filename='Data_for_Investment_Sec.csv', callback=get_csv, button_type="primary") 
+    inv_chart = pn.Column(save_charts,save_csv,tot_inv_by_year & one_inv)
+    ######################
+    ## Electricity Generation
+    ######################
     generation = alt.Chart(all_data["Electricity"].dropna(),width=800,height=437)
     selection = alt.selection_multi(fields=['Tech_name'],bind='legend')
     generation_by_year = generation.mark_area().encode(
@@ -243,7 +304,20 @@ def get_charts(all_data):
     ).transform_filter( 
         selection
     ).interactive()
-    elec_chart = generation_by_year&one_year
+    
+    def save_plot():
+        output = BytesIO()
+        output.name = "data.png"
+        save(chart=(generation_by_year), fp=output,format='png',scale_factor=2.0, method='selenium',webdriver='chrome')
+        output.seek(0)
+        return output
+    def get_csv():    
+        df = generation_by_year.data.pivot_table(values='VALUE',index=['Tech_name'],columns='YEAR').reset_index()
+        return BytesIO(df.to_csv().encode())
+    save_charts = pn.widgets.FileDownload(filename='Plot_for_Electricity_Gen.png', callback=save_plot, button_type="primary")    
+    save_csv = pn.widgets.FileDownload(filename='Data_for_Electricity_Gen.csv', callback=get_csv, button_type="primary")    
+    
+    elec_chart = pn.Column(save_charts,save_csv,generation_by_year&one_year)
     ######################
     ## Total Capacity
     ######################
@@ -265,7 +339,19 @@ def get_charts(all_data):
     ).transform_filter( 
         selection
     ).interactive()
-    pp_chart = tot_cap_by_year&one_cap
+    
+    def save_plot():
+        output = BytesIO()
+        output.name = "data.png"
+        save(chart=(tot_cap_by_year), fp=output,format='png',scale_factor=2.0, method='selenium',webdriver='chrome')
+        output.seek(0)
+        return output
+    def get_csv():    
+        df = tot_cap_by_year.data.pivot_table(values='VALUE',index=['Tech_name'],columns='YEAR').reset_index()
+        return BytesIO(df.to_csv().encode())
+    save_charts = pn.widgets.FileDownload(filename='Plot_for_Power_Plants.png', callback=save_plot, button_type="primary")    
+    save_csv = pn.widgets.FileDownload(filename='Data_for_Power_Plants.csv', callback=get_csv, button_type="primary") 
+    pp_chart =  pn.Column(save_charts,save_csv,tot_cap_by_year&one_cap)
     ######################
     ## Sectoral Mix
     ######################
@@ -279,8 +365,22 @@ def get_charts(all_data):
                     alt.Color('Tech_name'),
                     tooltip=['YEAR','Tech_name','sum(VALUE)']
                 )
-        return pn.pane.Vega(chart)
+        def save_plot():
+            output = BytesIO()
+            output.name = "data.png"
+            save(chart=chart, fp=output,format='png',scale_factor=2.0, method='selenium',webdriver='chrome')
+            output.seek(0)
+            return output
+        def get_csv():    
+            df = chart.data.pivot_table(values='VALUE',index=['Tech_name'],columns='YEAR').reset_index()
+            return BytesIO(df.to_csv().encode())        
         
+        save_charts = pn.widgets.FileDownload(filename='Plot_for_'+sector+'.png', callback=save_plot, button_type="primary")    
+        save_csv = pn.widgets.FileDownload(filename='Data_for_'+sector+'.csv', callback=get_csv, button_type="primary") 
+        one_sec_chart =  pn.Column(save_charts,save_csv,chart)
+        
+        return one_sec_chart
+
     sec_chart = pn.interact(fe_chart,sector=sectors)
 
 
