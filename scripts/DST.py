@@ -19,20 +19,20 @@ def get_file_data(out_file):
     #names of tech  The file Tech_names contains a dictionary with the techs and easy names for the Goa model
     
     #names of tech elecetrcity
-    elec_en = pd.read_excel('Tech_names_Goa.xlsx', sheet_name='Power', usecols='A,B,D')
+    elec_en = pd.read_excel('Tech_names_Goa.xlsx', sheet_name='Power', usecols='A,B,C,D')
     #names of other sectors
-    fe_en = pd.read_excel('Tech_names_Goa.xlsx', sheet_name='sectoral_mix', usecols='A,D')
+    fe_en = pd.read_excel('Tech_names_Goa.xlsx', sheet_name='sectoral_mix', usecols='A,D,E')
     #tn names of all tech joined for emissions
     emi_en = pd.concat([elec_en,fe_en], ignore_index=True)
     # alias for primary names
-    pe_en = pd.read_excel('Tech_names_Goa.xlsx', sheet_name='primary_e', usecols='A,B')
+    pe_en = pd.read_excel('Tech_names_Goa.xlsx', sheet_name='primary_e', usecols='A,B,C')
     #sectorial mix
-    sector_names = pd.read_excel('Tech_names_Goa.xlsx', usecols='A, B,C,D', sheet_name='sectoral_mix')
-    #Transport names
+    sector_names = pd.read_excel('Tech_names_Goa.xlsx', usecols='A, B,C,D,E', sheet_name='sectoral_mix')
+
     sector_namesT = sector_names[sector_names['Sector'].isin(['Public','Private','Freight'])] # to use in rate of use by tech for the transport
-    # Other Demand sectors
     sector_namesOTH = sector_names[~sector_names['Sector'].isin(['Public','Private','Freight'])]
-    
+
+
     ## Reading csv file and segregating
     act = n_file_r.loc[n_file_r.NAME=='ProdByTech']
     pe = n_file_r.loc[n_file_r.NAME=='ProdAnn']
@@ -43,18 +43,18 @@ def get_file_data(out_file):
     inv = n_file_r.loc[n_file_r.NAME=='DiscCapitalInvestment']
 
     sply = act.copy()
-    sply = (pd.merge(sply, pe_en[['TECHNOLOGY', 'primary_names']] , on='TECHNOLOGY'))
-    sply = sply.groupby(['YEAR','primary_names'], as_index=False).sum()
+    sply = (pd.merge(sply, pe_en[['TECHNOLOGY', 'primary_names','Color']] , on='TECHNOLOGY'))
+    sply = sply.groupby(['YEAR','primary_names','Color'], as_index=False).sum()
     sply = sply[sply['VALUE'] > 0]
 
-    trp = (pd.merge(dem.copy(), sector_namesT[['TECHNOLOGY', 'Tech_name','Sector','Fuel']] , on='TECHNOLOGY'))
+    trp = (pd.merge(dem.copy(), sector_namesT[['TECHNOLOGY', 'Tech_name','Sector','Fuel','Color']] , on='TECHNOLOGY'))
     trp = trp.groupby(['YEAR','Tech_name','Sector','Fuel'], as_index=False).mean()
 
-    oth = (pd.merge(act.copy(), sector_namesOTH[['TECHNOLOGY', 'Tech_name','Sector','Fuel']] , on='TECHNOLOGY'))
+    oth = (pd.merge(act.copy(), sector_namesOTH[['TECHNOLOGY', 'Tech_name','Sector','Fuel','Color']] , on='TECHNOLOGY'))
 
     final_energy_all = pd.concat([trp,oth])
-    final_energy_fuel = final_energy_all.groupby(['YEAR','Fuel'], as_index=False).sum()
-    final_energy_sec = final_energy_all.groupby(['YEAR','Sector'], as_index=False).sum()
+    final_energy_fuel = final_energy_all.groupby(['YEAR','Fuel','Color'], as_index=False).sum()
+    final_energy_sec = final_energy_all.groupby(['YEAR','Sector','Color'], as_index=False).sum()
 
     final_energy_fuel = final_energy_fuel[final_energy_fuel['VALUE'] > 0]
     final_energy_sec = final_energy_sec[final_energy_sec['VALUE'] > 0]
@@ -63,7 +63,7 @@ def get_file_data(out_file):
 
     #annual emission by tech
     aet = (pd.merge(aet, emi_en, on='TECHNOLOGY'))
-    aet = aet.groupby(['YEAR','Tech_name'], as_index=False).sum()
+    aet = aet.groupby(['YEAR','Tech_name','Color'], as_index=False).sum()
     aet = aet[aet['VALUE'] > 0]
     #remove unused categories
     aet.drop(aet.columns[3:], axis=1, inplace=True)
@@ -166,7 +166,7 @@ def get_charts(all_data):
                 ).add_selection(selection).interactive()
 
     # Each sector plot filtered by clicking the stacked plot
-    one_fuel = fe_by_fuel.mark_area().encode(
+    one_fuel = fe_by_fuel.mark_bar().encode(
         alt.Y("sum(VALUE)",title='Final Energy in PJ',axis=alt.Axis(labelFontSize=15,labelAngle=0,titleFontSize=20)),
         alt.Color('Fuel'), 
         tooltip=['Fuel','sum(VALUE)','YEAR'],
@@ -175,7 +175,7 @@ def get_charts(all_data):
         selection
     ).interactive()
 
-    one_sec = fe_by_sec.mark_area().encode(
+    one_sec = fe_by_sec.mark_bar().encode(
         alt.Y("sum(VALUE)",title='Final Energy in PJ',axis=alt.Axis(labelFontSize=15,labelAngle=0,titleFontSize=20)),
         alt.Color('Sector'), 
         tooltip=['Sector','sum(VALUE)','YEAR'],
@@ -405,11 +405,11 @@ viewer = Plotter(name='DST')
 
 from panel.template import DarkTheme
 
-bootstrap = pn.template.BootstrapTemplate(busy_indicator=pn.indicators.LoadingSpinner(value=True, width=30, height=30),logo='Goa.png',
-header_background='cornflowerblue',theme=DarkTheme,title=" Developing Energy Plan and Action Plan for the State of Goa ")
+bootstrap = pn.template.BootstrapTemplate(busy_indicator=pn.indicators.LoadingSpinner(value=True, width=60, height=60),logo='Goa.png',
+header_background='cornflowerblue',title=" Developing Energy Plan and Action Plan for the State of Goa ")
 pn.config.sizing_mode = 'stretch_width'
 bootstrap.sidebar.append(viewer.param.file_name)
-bootstrap.sidebar.append(pn.Column(pn.pane.PNG('Giz.png',height=50),width=250,height=50))
+bootstrap.sidebar.append(pn.Column("Developed for ",pn.pane.PNG('Goa.png',height=200),"Implementing Partner",pn.pane.PNG('Giz.png',height=75),width=150,height=500))
 bootstrap.main.append(viewer.update_main_plot)
 
 bootstrap.servable(title='DST')
