@@ -405,22 +405,11 @@ viewer = Plotter(name='DST')
 
 from panel.template import DarkTheme
 
-bootstrap = pn.template.BootstrapTemplate(busy_indicator=pn.indicators.LoadingSpinner(value=True, width=30, height=30),logo='tce_logo.jpg',
-header_background='cornflowerblue',theme=DarkTheme,title=" Goa RE Plan")
+bootstrap = pn.template.BootstrapTemplate(busy_indicator=pn.indicators.LoadingSpinner(value=True, width=30, height=30),logo='Goa.png',
+header_background='cornflowerblue',theme=DarkTheme,title=" Developing Energy Plan and Action Plan for the State of Goa ")
 pn.config.sizing_mode = 'stretch_width'
 bootstrap.sidebar.append(viewer.param.file_name)
-bootstrap.sidebar.append(pn.Column(pn.pane.JPG('tce_logo.jpg',height=50),"Copyright &copy; by The Celestial Earth.<br>All rights reserved.\
-             <br>No part of this publication may be reproduced, distributed, or transmitted in any form or by any means, \
-            <br>including photocopying, recording, or other electronic or mechanical methods, without the prior written permission \
-            <br>of the publisher, except in the case of brief quotations embodied in critical reviews and certain other noncommercial\
-            <br> uses permitted by copyright law. For permission requests, write to the publisher, addressed: anindya.b@thecelestialearth.org",
-            "Discalimer: <br> This publication has been prepared for general guidance on matters of interest only, and does not constitute \
-            <br>professional advice.  You should not act upon the information contained in this publication without obtaining specific professional\
-            <br>advice.  No representation or warranty (express or implied) is given as to the accuracy or completeness of the information contained \
-            <br> in this publication, and, to the extent permitted by law, The Celestial Earth, its members, employees and agents accept no liability,\
-            <br> and disclaim all responsibility, for the consequences of you or anyone else acting, or refraining to act, in reliance on the information\
-            <br> contained in this publication or for any decision based on it.",width=250,height=50)
-            )
+bootstrap.sidebar.append(pn.Column(pn.pane.PNG('Giz.png',height=50),width=250,height=50))
 bootstrap.main.append(viewer.update_main_plot)
 
 bootstrap.servable(title='DST')
