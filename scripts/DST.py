@@ -327,7 +327,7 @@ def get_charts(all_data):
         output.seek(0)
         return output
     def get_csv():    
-        df = generation_by_year.data.pivot_table(values='VALUE',index=['Tech_name'],columns='YEAR').reset_index()
+        df = generation_by_year.data.pivot_table(values='VALUE',index=['Tech_name','TIMESLICE'],columns='YEAR').reset_index()
         return BytesIO(df.to_csv().encode())
     save_charts = pn.widgets.FileDownload(filename='Plot_for_Electricity_Gen.png', callback=save_plot, button_type="primary")    
     save_csv = pn.widgets.FileDownload(filename='Data_for_Electricity_Gen.csv', callback=get_csv, button_type="primary")    
