@@ -374,7 +374,7 @@ def get_charts(all_data):
     ######################################
     sectors = all_data["Sectoral_Mix"].Sector.drop_duplicates().tolist()
     def fe_chart(sector):
-        fe_dem = all_data["Sectoral_Mix"].loc[all_data["Sectoral_Mix"].Sector==sector,['YEAR','Tech_name',"Color",'VALUE']]
+        fe_dem = all_data["Sectoral_Mix"].loc[all_data["Sectoral_Mix"].Sector==sector,['YEAR','Tech_name',"Color",'VALUE']].groupby(['YEAR','Tech_name','Color']).sum().reset_index()
         cmap = fe_dem[['Tech_name','Color']].drop_duplicates()
         sec_chart = alt.Chart(fe_dem.dropna(),width=614,height=437)
         chart = sec_chart.mark_area().encode(
